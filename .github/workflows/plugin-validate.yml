@@ -36,3 +36,34 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/claude-cli" @anthropic-ai/claude-code@2.1.326 --no-fund --no-audit
           export PATH="$RUNNER_TEMP/claude-cli/node_modules/.bin:$PATH"
           claude plugin validate .
+
+  # Fail if a tracked file is named CLAUDE.md or CLAUDE.local.md,
+  # or if .claude/CLAUDE.md is tracked. Those rules belong in AGENTS.md.
+  no-claude-files:
+    name: Reject tracked CLAUDE files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Reject tracked CLAUDE instruction files
+        run: |
+          set -euo pipefail
+          hits=()
+          while IFS= read -r -d '' path; do
+            base="${path##*/}"
+            if [ "$base" = "CLAUDE.md" ] || [ "$base" = "CLAUDE.local.md" ] || [ "$path" = ".claude/CLAUDE.md" ]; then
+              hits+=("$path")
+            fi
+          done < <(git ls-files -z)
+          if [ "${#hits[@]}" -ne 0 ]; then
+            msg="Fold the content into AGENTS.md (keep every rule, drop exact duplicates) and delete the CLAUDE file in a PR."
+            echo "$msg"
+            for path in "${hits[@]}"; do
+              echo "::error file=${path}::${msg}"
+              printf '%s\n' "$path"
+            done
+            exit 1
+          fi
