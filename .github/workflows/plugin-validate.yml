@@ -1,0 +1,38 @@
+# Validate the Claude marketplace catalog.
+# Official command for a marketplace repo: `claude plugin validate .`
+# https://code.claude.com/docs/en/plugins/publish
+# It reads only files in this repo and does not need a token.
+# Do not pass --strict: a missing description or version is a warning.
+# This catalog has no version field, so every commit is an update.
+name: plugin-validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: plugin-validate-${{ github.head_ref || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+      - name: Validate Claude marketplace
+        env:
+          CI: "true"
+        run: |
+          npm install --prefix "$RUNNER_TEMP/claude-cli" @anthropic-ai/claude-code@2.1.326 --no-fund --no-audit
+          export PATH="$RUNNER_TEMP/claude-cli/node_modules/.bin:$PATH"
+          claude plugin validate .

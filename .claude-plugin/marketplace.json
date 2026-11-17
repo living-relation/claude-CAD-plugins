@@ -1,0 +1,22 @@
+{
+  "name": "living-relation-plugins",
+  "owner": {
+    "name": "living-relation"
+  },
+  "plugins": [
+    {
+      "name": "workstation-core",
+      "source": {
+        "source": "github",
+        "repo": "living-relation/workstation"
+      }
+    },
+    {
+      "name": "handbuilt-cad",
+      "source": {
+        "source": "github",
+        "repo": "living-relation/handbuilt-cad"
+      }
+    }
+  ]
+}
